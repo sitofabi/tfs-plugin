@@ -69,6 +69,7 @@ public class TeamFoundationServerScmTest {
                     "    <userPassword>ZXhhbXBsZVBhc3N3b3Jk</userPassword>\n" +
                     "    <userName>example\\tfsbuilder</userName>\n" +
                     "    <useUpdate>false</useUpdate>\n" +
+                    "    <showWorkspaces>true</showWorkspaces>\n" +
                     "</scm>";
             final XStream serializer = new XStream2();
 
@@ -87,6 +88,7 @@ public class TeamFoundationServerScmTest {
                             "  <password>zs+99bxCGlcSxR3Umnj0q0OjYXVSiB+qLzS0ZjuHz2M=</password>\n" +
                             "  <userName>example\\tfsbuilder</userName>\n" +
                             "  <useUpdate>false</useUpdate>\n" +
+                            "  <showWorkspaces>true</showWorkspaces>\n" +
                             "</hudson.plugins.tfs.TeamFoundationServerScm>";
 
             final String actualUpgradedXml = serializer.toXML(tfsScmObject);
@@ -116,7 +118,7 @@ public class TeamFoundationServerScmTest {
         when(build.getProject()).thenReturn(project);
         when(project.getName()).thenReturn("ThisIsAJob");
 
-        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "erik_${JOB_NAME}");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "erik_${JOB_NAME}", true);
         assertEquals("Workspace name was incorrect", "erik_ThisIsAJob", scm.getWorkspaceName(build, mock(Computer.class)));
     }
     
@@ -269,20 +271,20 @@ public class TeamFoundationServerScmTest {
 
     @Test
     public void assertDefaultValueIsUsedForEmptyLocalPath() {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "", false, "workspace");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "", false, "workspace", true);
         assertEquals("Default value for work folder was incorrect", ".", scm.getLocalPath());
     }
     
     @Test
     public void assertDefaultValueIsUsedForEmptyWorkspaceName() {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, ".", false, "");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, ".", false, "", true);
         assertEquals("Default value for workspace was incorrect", "Hudson-${JOB_NAME}-${NODE_NAME}", scm.getWorkspaceName());
     }
     
     @Test
     public void assertGetModuleRootReturnsWorkFolder() throws Exception {
         workspace = Util.createTempFilePath();
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "workfolder", false, "");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "workfolder", false, "", true);
         FilePath moduleRoot = scm.getModuleRoot(workspace);
         assertEquals("Name for module root was incorrect", "workfolder", moduleRoot.getName());
         assertEquals("The parent for module root was incorrect", workspace.getName(), moduleRoot.getParent().getName());
@@ -291,7 +293,7 @@ public class TeamFoundationServerScmTest {
     @Test
     public void assertGetModuleRootWorksForDotWorkFolder() throws Exception {
         workspace = Util.createTempFilePath();
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, ".", false, "");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, ".", false, "", true);
         FilePath moduleRoot = scm.getModuleRoot(workspace);
         assertTrue("The module root was reported as not existing even if its virtually the same as workspace",
                 moduleRoot.exists());
@@ -300,7 +302,7 @@ public class TeamFoundationServerScmTest {
     
     @Test
     public void assertWorkspaceNameIsAddedToEnvVars() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, ".", false, "WORKSPACE_SAMPLE");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, ".", false, "WORKSPACE_SAMPLE", true);
         AbstractBuild build = mock(AbstractBuild.class);
         AbstractProject project = mock(AbstractProject.class);
         when(build.getProject()).thenReturn(project);
@@ -313,7 +315,7 @@ public class TeamFoundationServerScmTest {
     
     @Test
     public void assertWorksfolderPathIsAddedToEnvVars() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", true);
         
         Map<String, String> env = new HashMap<String, String>();
         env.put("WORKSPACE", "/this/is/a");
@@ -323,7 +325,7 @@ public class TeamFoundationServerScmTest {
     
     @Test
     public void assertProjectPathIsAddedToEnvVars() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", true);
         Map<String, String> env = new HashMap<String, String>();
         scm.buildEnvVars(mock(AbstractBuild.class), env );        
         assertEquals("The project path was incorrect", "projectpath", env.get(TeamFoundationServerScm.PROJECTPATH_ENV_STR));
@@ -331,7 +333,7 @@ public class TeamFoundationServerScmTest {
     
     @Test
     public void assertServerUrlIsAddedToEnvVars() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", true);
         Map<String, String> env = new HashMap<String, String>();
         scm.buildEnvVars(mock(AbstractBuild.class), env );        
         assertEquals("The server URL was incorrect", "serverurl", env.get(TeamFoundationServerScm.SERVERURL_ENV_STR));
@@ -339,7 +341,7 @@ public class TeamFoundationServerScmTest {
     
     @Test
     public void assertTfsUserNameIsAddedToEnvVars() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", "user", (Secret) null);
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", "user", (Secret) null, true);
         Map<String, String> env = new HashMap<String, String>();
         scm.buildEnvVars(mock(AbstractBuild.class), env );        
         assertEquals("The TFS user name was incorrect", "user", env.get(TeamFoundationServerScm.USERNAME_ENV_STR));
@@ -347,7 +349,7 @@ public class TeamFoundationServerScmTest {
     
     @Test
     public void assertTfsWorkspaceChangesetIsAddedToEnvVars() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", true);
         scm.setWorkspaceChangesetVersion("12345");
         Map<String, String> env = new HashMap<String, String>();
         scm.buildEnvVars(mock(AbstractBuild.class), env );        
@@ -356,7 +358,7 @@ public class TeamFoundationServerScmTest {
   
     @Test
     public void assertTfsWorkspaceChangesetIsNotAddedToEnvVarsIfEmpty() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", true);
         scm.setWorkspaceChangesetVersion("");
         Map<String, String> env = new HashMap<String, String>();
         scm.buildEnvVars(mock(AbstractBuild.class), env );        
@@ -365,7 +367,7 @@ public class TeamFoundationServerScmTest {
 
     @Test
     public void assertTfsWorkspaceChangesetIsNotAddedToEnvVarsIfNull() throws Exception {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("serverurl", "projectpath", null, "PATH", false, "WORKSPACE_SAMPLE", true);
         scm.setWorkspaceChangesetVersion(null);
         Map<String, String> env = new HashMap<String, String>();
         scm.buildEnvVars(mock(AbstractBuild.class), env );        
@@ -373,7 +375,7 @@ public class TeamFoundationServerScmTest {
     }
 
     @Test public void recordWorkspaceChangesetVersion() throws Exception {
-        final TeamFoundationServerScm scm = new TeamFoundationServerScm("serverUrl", "projectPath", null, "localPath", false, "workspace");
+        final TeamFoundationServerScm scm = new TeamFoundationServerScm("serverUrl", "projectPath", null, "localPath", false, "workspace", true);
         final AbstractBuild build = mock(AbstractBuild.class);
         when(build.getTimestamp()).thenReturn(new GregorianCalendar(2015, 03, 28, 22, 04));
         final BuildListener listener = null;
@@ -391,7 +393,7 @@ public class TeamFoundationServerScmTest {
     }
 
     @Test public void recordWorkspaceChangesetVersionWithSingleVersionSpec() throws Exception {
-        final TeamFoundationServerScm scm = new TeamFoundationServerScm("serverUrl", "projectPath", null, "localPath", false, "workspace");
+        final TeamFoundationServerScm scm = new TeamFoundationServerScm("serverUrl", "projectPath", null, "localPath", false, "workspace", true);
         final AbstractBuild build = mock(AbstractBuild.class);
         final BuildListener listener = null;
         final Project project = mock(Project.class);
@@ -412,7 +414,7 @@ public class TeamFoundationServerScmTest {
      */
     @Test
     public void assertWorkspaceNameReplacesInvalidChars() {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "A\"B/C:D<E>F|G*H?I");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "A\"B/C:D<E>F|G*H?I", true);
         assertEquals("Workspace name contained invalid chars", "A_B_C_D_E_F_G_H_I", scm.getWorkspaceName(null, null));
     }
     
@@ -421,7 +423,7 @@ public class TeamFoundationServerScmTest {
      */
     @Test
     public void assertWorkspaceNameReplacesEndingPeriod() {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "Workspace.Name.");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "Workspace.Name.", true);
         assertEquals("Workspace name ends with period", "Workspace.Name_", scm.getWorkspaceName(null, null));
     }
     
@@ -430,7 +432,7 @@ public class TeamFoundationServerScmTest {
      */
     @Test
     public void assertWorkspaceNameReplacesEndingSpace() {
-        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "Workspace Name ");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "Workspace Name ", true);
         assertEquals("Workspace name ends with space", "Workspace Name_", scm.getWorkspaceName(null, null));
     }    
     
@@ -440,7 +442,7 @@ public class TeamFoundationServerScmTest {
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getAction(ParametersAction.class)).thenReturn(action);
 
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("https://${PARAM}.com", null, null, ".", false, "");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("https://${PARAM}.com", null, null, ".", false, "", true);
         assertEquals("The server url wasnt resolved", "https://RESOLVED.com", scm.getServerUrl(build));
     }    
     
@@ -450,7 +452,7 @@ public class TeamFoundationServerScmTest {
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getAction(ParametersAction.class)).thenReturn(action);
 
-        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, "$/$PARAM/path", null, ".", false, "");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, "$/$PARAM/path", null, ".", false, "", true);
         assertEquals("The project path wasnt resolved", "$/RESOLVED/path", scm.getProjectPath(build));
     }    
     
@@ -460,14 +462,14 @@ public class TeamFoundationServerScmTest {
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getAction(ParametersAction.class)).thenReturn(action);
 
-        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "WS-${PARAM}");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm(null, null, null, ".", false, "WS-${PARAM}", true);
         assertEquals("The workspace name wasnt resolved", "WS-RESOLVED", scm.getWorkspaceName(build, mock(Computer.class)));
     }
     
     @Test public void assertTfsWorkspaceIsntRemovedIfThereIsNoBuildWhenProcessWorkspaceBeforeDeletion() throws Exception {
         AbstractProject project = mock(AbstractProject.class);
         Node node = mock(Node.class);
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("server", "projectpath", null, ".", false, "workspace");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("server", "projectpath", null, ".", false, "workspace", true);
         assertThat(scm.processWorkspaceBeforeDeletion(project, workspace, node), is(true));
         verify(project).getLastBuild();
         verifyNoMoreInteractions(project);
@@ -483,7 +485,7 @@ public class TeamFoundationServerScmTest {
         when(build.getBuiltOn()).thenReturn(node).thenReturn(node);
         when(node.getNodeName()).thenReturn("node1").thenReturn("node2");
         when(inNode.getNodeName()).thenReturn("needleNode").thenReturn("needleNode");
-        TeamFoundationServerScm scm = new TeamFoundationServerScm("server", "projectpath", null, ".", false, "workspace");
+        TeamFoundationServerScm scm = new TeamFoundationServerScm("server", "projectpath", null, ".", false, "workspace", true);
         assertThat( scm.processWorkspaceBeforeDeletion(project, workspace, inNode), is(true));
         verify(project).getLastBuild();
         verify(node, times(2)).getNodeName();
