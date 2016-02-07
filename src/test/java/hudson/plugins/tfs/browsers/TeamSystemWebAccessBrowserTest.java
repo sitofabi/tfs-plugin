@@ -50,7 +50,7 @@ public class TeamSystemWebAccessBrowserTest {
         AbstractBuild build = mock(AbstractBuild.class);
         AbstractProject<?,?> project = mock(AbstractProject.class);
         when(build.getProject()).thenReturn(project);
-        when(project.getScm()).thenReturn(new TeamFoundationServerScm("http://server:80", null, null, null, false, null, null, (Secret) null));
+        when(project.getScm()).thenReturn(new TeamFoundationServerScm("http://server:80", null, null, null, false, null, null, (Secret) null, false));
         
         ChangeSet changeset = new ChangeSet("62643", null, "user", "comment");
         new ChangeLogSet(build, new ChangeSet[]{ changeset});        
@@ -70,6 +70,40 @@ public class TeamSystemWebAccessBrowserTest {
         URL actual = browser.getFileLink(item);
         assertEquals("The change set link was incorrect", "http://tswaserver:8090/view.aspx?path=$/Project/Folder/file.cs&cs=99", actual.toString());
     }
+    
+    /**
+     * http://server:80/_versionControl/changeset/62643
+     */
+    @Test public void assertChangeSetLinkUsesScmConfigurationRestUrl() throws Exception {
+        AbstractBuild build = mock(AbstractBuild.class);
+        AbstractProject<?,?> project = mock(AbstractProject.class);
+        when(build.getProject()).thenReturn(project);
+        when(project.getScm()).thenReturn(new TeamFoundationServerScm("http://server:80", null, null, null, false, null, null, (Secret) null, true));
+        
+        ChangeSet changeset = new ChangeSet("62643", null, "user", "comment");
+        new ChangeLogSet(build, new ChangeSet[]{ changeset});        
+        TeamSystemWebAccessBrowser browser = new TeamSystemWebAccessBrowser("");
+        URL actual = browser.getChangeSetLink(changeset);
+        assertEquals("The change set link was incorrect", "http://server:80/_versionControl/changeset/62643", actual.toString());
+    }
+    
+    /**
+     * http://server:80/_versionControl/changeset/62643#path=%24%2FProject%2FFolder%2Ffile.cs&_a=contents
+     */
+     @Test public void assertFileLinkUsesScmConfigurationRestUrl() throws Exception {
+         AbstractBuild build = mock(AbstractBuild.class);
+         AbstractProject<?,?> project = mock(AbstractProject.class);
+         when(build.getProject()).thenReturn(project);
+         when(project.getScm()).thenReturn(new TeamFoundationServerScm("http://server:80", null, null, null, false, null, null, (Secret) null, true));
+         
+         ChangeSet changeset = new ChangeSet("62643", null, "user", "comment");
+         new ChangeLogSet(build, new ChangeSet[]{ changeset});        
+         ChangeSet.Item item = new ChangeSet.Item("$/Project/Folder/file.cs", "add");
+         changeset.add(item);
+         TeamSystemWebAccessBrowser browser = new TeamSystemWebAccessBrowser("");
+         URL actual = browser.getFileLink(item);
+         assertEquals("The change set link was incorrect", "http://server:80/_versionControl/changeset/62643#path=%24%2FProject%2FFolder%2Ffile.cs&_a=contents", actual.toString());
+     }
 
     /**
      * http://tswaserver:8090/diff.aspx?opath=$/Project/Folder/file.cs&ocs=99&mpath=$/Project/Folder/file.cs&mcs=98
