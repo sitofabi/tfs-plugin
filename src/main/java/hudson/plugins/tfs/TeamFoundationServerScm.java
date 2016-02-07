@@ -87,6 +87,7 @@ public class TeamFoundationServerScm extends SCM {
     private final String userName;
     private final boolean useUpdate;
     private final boolean showWorkspaces;
+    private final boolean useRestUrls;
     
     private TeamFoundationServerRepositoryBrowser repositoryBrowser;
 
@@ -96,16 +97,16 @@ public class TeamFoundationServerScm extends SCM {
     private static final Logger logger = Logger.getLogger(TeamFoundationServerScm.class.getName());
 
     @Deprecated
-    public TeamFoundationServerScm(String serverUrl, String projectPath, String localPath, boolean useUpdate, String workspaceName, String userName, String password, boolean showWorkspaces) {
-        this(serverUrl, projectPath, null, localPath, useUpdate, workspaceName, userName, Secret.fromString(password), showWorkspaces);
+    public TeamFoundationServerScm(String serverUrl, String projectPath, String localPath, boolean useUpdate, String workspaceName, String userName, String password, boolean showWorkspaces, boolean useRestUrls) {
+        this(serverUrl, projectPath, null, localPath, useUpdate, workspaceName, userName, Secret.fromString(password), showWorkspaces, useRestUrls);
     }
 
-    TeamFoundationServerScm(String serverUrl, String projectPath, String cloakedPaths, String localPath, boolean useUpdate, String workspaceName, boolean showWorkspaces) {
-        this(serverUrl, projectPath, cloakedPaths, localPath, useUpdate, workspaceName, null, (Secret)null, showWorkspaces);
+    TeamFoundationServerScm(String serverUrl, String projectPath, String cloakedPaths, String localPath, boolean useUpdate, String workspaceName, boolean showWorkspaces, boolean useRestUrls) {
+        this(serverUrl, projectPath, cloakedPaths, localPath, useUpdate, workspaceName, null, (Secret)null, showWorkspaces, useRestUrls);
     }
 
     @DataBoundConstructor
-    public TeamFoundationServerScm(String serverUrl, String projectPath, String cloakedPaths, String localPath, boolean useUpdate, String workspaceName, String userName, Secret password, boolean showWorkspaces) {
+    public TeamFoundationServerScm(String serverUrl, String projectPath, String cloakedPaths, String localPath, boolean useUpdate, String workspaceName, String userName, Secret password, boolean showWorkspaces, boolean useRestUrls) {
         this.serverUrl = serverUrl;
         this.projectPath = projectPath;
         this.cloakedPaths = splitCloakedPaths(cloakedPaths);
@@ -115,6 +116,7 @@ public class TeamFoundationServerScm extends SCM {
         this.userName = userName;
         this.password = password;
         this.showWorkspaces = showWorkspaces;
+        this.useRestUrls = useRestUrls;
     }
 
     /* Migrate legacy data */
@@ -145,6 +147,10 @@ public class TeamFoundationServerScm extends SCM {
 
     public boolean isUseUpdate() {
         return useUpdate;
+    }
+    
+    public boolean isUseRestUrls() {
+    	return useRestUrls;
     }
 
     public String getUserPassword() {
@@ -467,7 +473,7 @@ public class TeamFoundationServerScm extends SCM {
         @Override
         public SCM newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             TeamFoundationServerScm scm = (TeamFoundationServerScm) super.newInstance(req, formData);
-            scm.repositoryBrowser = RepositoryBrowsers.createInstance(TeamFoundationServerRepositoryBrowser.class,req,formData,"browser");
+            scm.repositoryBrowser = RepositoryBrowsers.createInstance(TeamFoundationServerRepositoryBrowser.class,req,formData,"scm");
             return scm;
         }
 
