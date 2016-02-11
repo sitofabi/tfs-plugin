@@ -15,6 +15,8 @@ import hudson.remoting.Callable;
 
 import java.io.PrintStream;
 
+import org.jenkinsci.remoting.RoleChecker;
+
 /**
  * Command to create a label on TFS.
  * @author Rodrigo Lopes (rodrigolopes)
@@ -75,4 +77,10 @@ public class LabelCommand extends AbstractCallableCommand implements Callable<Vo
 
         return null;
     }
+
+	public void checkRoles(RoleChecker arg0) throws SecurityException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

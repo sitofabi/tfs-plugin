@@ -3,7 +3,9 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.448</version>
+    <!-- Baseline Jenkins version you use to build and test the plugin. Users must have this version or newer to run. -->
+    <version>2.3</version>
+    <relativePath/>
   </parent>
 
   <artifactId>tfs</artifactId>
@@ -73,7 +75,7 @@
   </distributionManagement>
 
   <!-- see http://groups.google.com/group/hudson-dev/browse_thread/thread/83e34c639eec470a for the rationale behind this -->
-  <build>
+ <!-- <build>
     <plugins>
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
@@ -183,47 +185,47 @@
         </plugins>
       </build>
     </profile>
-  </profiles>
+  </profiles>-->
 
   <dependencies>
     <!-- 
       com.microsoft.tfs.sdk includes its dependencies inline, some of which conflict with those of jenkins-core.
       We have to repeat dependencies here to make sure they are considered before those inside the TFS SDK.
     -->
-    <dependency>
+     <dependency>
       <groupId>org.jenkins-ci.main</groupId>
       <artifactId>jenkins-war</artifactId>
-      <version>1.448</version>
       <type>war</type>
       <scope>test</scope>
+	  <version>${jenkins.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.main</groupId>
       <artifactId>jenkins-core</artifactId>
-      <version>1.448</version>
       <scope>provided</scope>
+	  <version>${jenkins.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.main</groupId>
       <artifactId>jenkins-test-harness</artifactId>
-      <version>1.448</version>
       <scope>test</scope>
+	  <version>${jenkins.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.main</groupId>
-      <artifactId>ui-samples-plugin</artifactId>
-      <version>1.448</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
+	<dependency>
+	<groupId>org.jenkins-ci.plugins</groupId>
+	<artifactId>mailer</artifactId>
+	<version>1.16</version>
+	<scope>compile</scope>
+	</dependency>
+	<dependency>
       <groupId>com.microsoft.tfs.sdk</groupId>
       <artifactId>com.microsoft.tfs.sdk</artifactId>
       <version>14.0.2_jenkins-tfs-plugin</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/src/main/webapp/WEB-INF/lib/com.microsoft.tfs.sdk-14.0.2_jenkins-tfs-plugin.jar</systemPath>
     </dependency>
-    <dependency>
+	
+    <!--<dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
@@ -240,7 +242,7 @@
         <artifactId>mockito-core</artifactId>
         <version>1.7</version> 
         <scope>test</scope>
-    </dependency>
+    </dependency>-->
   </dependencies>
 
     <repositories>

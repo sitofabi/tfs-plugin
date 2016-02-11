@@ -9,6 +9,7 @@ import hudson.plugins.tfs.model.Workspace;
 import hudson.plugins.tfs.util.TextTableParser;
 import hudson.remoting.Callable;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -132,4 +133,9 @@ public class ListWorkspacesCommand extends AbstractCallableCommand implements Ca
             logger.println(line);
         }
     }
+
+	public void checkRoles(RoleChecker arg0) throws SecurityException {
+		// TODO Auto-generated method stub
+		
+	}
 }

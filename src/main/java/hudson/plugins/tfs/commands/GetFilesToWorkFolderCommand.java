@@ -2,6 +2,8 @@ package hudson.plugins.tfs.commands;
 
 import java.io.PrintStream;
 
+import org.jenkinsci.remoting.RoleChecker;
+
 import com.microsoft.tfs.core.clients.versioncontrol.GetOptions;
 import com.microsoft.tfs.core.clients.versioncontrol.events.GetEvent;
 import com.microsoft.tfs.core.clients.versioncontrol.events.GetListener;
@@ -71,5 +73,10 @@ public class GetFilesToWorkFolderCommand extends AbstractCallableCommand impleme
         // TODO: The CLC used to emit folder paths as headings, then files within; should we do that?
         logger.println(getEvent.getTargetLocalItem());
     }
+
+	public void checkRoles(RoleChecker arg0) throws SecurityException {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

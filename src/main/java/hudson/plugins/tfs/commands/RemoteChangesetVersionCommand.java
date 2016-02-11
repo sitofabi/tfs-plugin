@@ -14,6 +14,7 @@ import hudson.plugins.tfs.util.DateUtil;
 import hudson.plugins.tfs.util.TextTableParser;
 import hudson.remoting.Callable;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -127,4 +128,10 @@ public class RemoteChangesetVersionCommand extends AbstractCallableCommand imple
 
         return StringUtils.EMPTY;
     }
+
+	public void checkRoles(RoleChecker arg0) throws SecurityException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

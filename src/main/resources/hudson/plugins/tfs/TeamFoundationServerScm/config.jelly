@@ -26,6 +26,11 @@
 			<f:checkbox name="tfs.useRestUrls" checked="${h.defaultToTrue(scm.useRestUrls)}"/>
 		</f:entry>
 		
+		<f:entry field="showWorkspaces" title="Show workspaces" description=" ....">
+			<f:checkbox default="true"/>
+		</f:entry>
+		
+		
     
 	    <f:entry field="localPath" title="Local workfolder">
 	        <f:textbox default="."
