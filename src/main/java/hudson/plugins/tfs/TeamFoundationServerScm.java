@@ -44,6 +44,7 @@ import hudson.plugins.tfs.model.Project;
 import hudson.plugins.tfs.model.WorkspaceConfiguration;
 import hudson.plugins.tfs.model.Server;
 import hudson.plugins.tfs.model.ChangeSet;
+import hudson.plugins.tfs.model.MappingItem;
 import hudson.plugins.tfs.util.BuildVariableResolver;
 import hudson.plugins.tfs.util.BuildWorkspaceConfigurationRetriever;
 import hudson.plugins.tfs.util.BuildWorkspaceConfigurationRetriever.BuildWorkspaceConfiguration;
@@ -61,11 +62,6 @@ import hudson.util.VariableResolver;
 
 import org.kohsuke.stapler.QueryParameter;
 
-/**
- * SCM for Microsoft Team Foundation Server.
- * 
- * @author Erik Ramfelt
- */
 public class TeamFoundationServerScm extends SCM {
 
     public static final String WORKSPACE_ENV_STR = "TFS_WORKSPACE";
@@ -92,20 +88,21 @@ public class TeamFoundationServerScm extends SCM {
 
     private transient String normalizedWorkspaceName;
     private transient String workspaceChangesetVersion;
+	private final Collection<MappingItem> mappedPaths;
     
     private static final Logger logger = Logger.getLogger(TeamFoundationServerScm.class.getName());
 
     @Deprecated
     public TeamFoundationServerScm(String serverUrl, String projectPath, String localPath, boolean useUpdate, String workspaceName, String userName, String password, boolean showWorkspaces) {
-        this(serverUrl, projectPath, null, localPath, useUpdate, workspaceName, userName, Secret.fromString(password), showWorkspaces);
+        this(serverUrl, projectPath, null, localPath, useUpdate, workspaceName, userName, Secret.fromString(password),false ,null);
     }
 
     TeamFoundationServerScm(String serverUrl, String projectPath, String cloakedPaths, String localPath, boolean useUpdate, String workspaceName, boolean showWorkspaces) {
-        this(serverUrl, projectPath, cloakedPaths, localPath, useUpdate, workspaceName, null, (Secret)null, showWorkspaces);
+        this(serverUrl, projectPath, cloakedPaths, localPath, useUpdate, workspaceName, null, (Secret)null, false, null);
     }
 
     @DataBoundConstructor
-    public TeamFoundationServerScm(String serverUrl, String projectPath, String cloakedPaths, String localPath, boolean useUpdate, String workspaceName, String userName, Secret password, boolean showWorkspaces) {
+    public TeamFoundationServerScm(String serverUrl, String projectPath, String cloakedPaths, String localPath, boolean useUpdate, String workspaceName, String userName, Secret password, boolean showWorkspaces, String mappedPaths) {
         this.serverUrl = serverUrl;
         this.projectPath = projectPath;
         this.cloakedPaths = splitCloakedPaths(cloakedPaths);
@@ -115,6 +112,7 @@ public class TeamFoundationServerScm extends SCM {
         this.userName = userName;
         this.password = password;
         this.showWorkspaces = showWorkspaces;
+        this.mappedPaths = splitMappedPaths(mappedPaths);
     }
 
     /* Migrate legacy data */
@@ -166,10 +164,28 @@ public class TeamFoundationServerScm extends SCM {
     public String getCloakedPaths() {
         return serializeCloakedPathCollectionToString(this.cloakedPaths);
     }
+    
+    public String getMappedPaths() {
+    	return serializeMappedPathCollectionToString(mappedPaths);
+    }
     // Bean properties END
 
     static String serializeCloakedPathCollectionToString(final Collection<String> cloakedPaths) {
         return cloakedPaths == null ? StringUtils.EMPTY : StringUtils.join(cloakedPaths, "\n");
+    }
+    
+    static String serializeMappedPathCollectionToString(final Collection<MappingItem> mappedPaths){
+    	if (null == mappedPaths) return StringUtils.EMPTY;
+    	StringBuilder aBuilder = new StringBuilder();
+    	for(final MappingItem aItem: mappedPaths)
+    	{
+    		aBuilder.append(aItem.getServerName());
+    		aBuilder.append(": ");
+    		aBuilder.append(aItem.getClientPath());
+    		aBuilder.append('\n');
+    	}
+    	return aBuilder.toString();
+    	//return mappedPaths == null ? StringUtils.EMPTY : StringUtils.join(mappedPaths, "\n");
     }
 
     String getWorkspaceName(AbstractBuild<?,?> build, Computer computer) {
@@ -212,6 +228,25 @@ public class TeamFoundationServerScm extends SCM {
             }
         }
         return text;
+    }
+    
+    static Collection<MappingItem> splitMappedPaths(final String mappedPaths) {
+        final List<MappingItem> mappedPathsList = new ArrayList<MappingItem>();
+         if (mappedPaths != null && mappedPaths.length() > 0) {
+        	 String lines[] = mappedPaths.split("\\n");
+        	 for (final String aLine : lines)
+        	 {
+        		 int aIndex = aLine.indexOf(": ");
+        		 if (aIndex >= 0)
+        		 {
+        			 String aServerPath= aLine.substring(0, aIndex);
+        			 String aClientPath = aLine.substring(aIndex+2);
+        			 mappedPathsList.add(new MappingItem(aServerPath, aClientPath));
+        		 }
+        	 }
+         }
+        	
+        return mappedPathsList;
     }
     
     static Collection<String> splitCloakedPaths(final String cloakedPaths) {
