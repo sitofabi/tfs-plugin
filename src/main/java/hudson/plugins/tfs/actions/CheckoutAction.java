@@ -12,6 +12,7 @@ import com.microsoft.tfs.core.clients.versioncontrol.specs.version.VersionSpec;
 import hudson.FilePath;
 import hudson.plugins.tfs.commands.RemoteChangesetVersionCommand;
 import hudson.plugins.tfs.model.ChangeSet;
+import hudson.plugins.tfs.model.MappingItem;
 import hudson.plugins.tfs.model.Project;
 import hudson.plugins.tfs.model.Server;
 import hudson.plugins.tfs.model.Workspace;
@@ -25,14 +26,16 @@ public class CheckoutAction {
     private final String localFolder;
     private final boolean useUpdate;
     private final boolean showWorkspaces;
+    private final Collection<MappingItem> mappedPaths;
 
-    public CheckoutAction(String workspaceName, String projectPath, Collection<String> cloakedPaths, String localFolder, boolean useUpdate, boolean showWorkspaces) {
+    public CheckoutAction(String workspaceName, String projectPath, Collection<String> cloakedPaths, String localFolder, boolean useUpdate, boolean showWorkspaces, Collection<MappingItem> mappedPaths) {
         this.workspaceName = workspaceName;
         this.projectPath = projectPath;
         this.cloakedPaths = cloakedPaths;
         this.localFolder = localFolder;
         this.useUpdate = useUpdate;
         this.showWorkspaces = showWorkspaces;
+        this.mappedPaths = mappedPaths;
     }
 
     public List<ChangeSet> checkout(Server server, FilePath workspacePath, Calendar lastBuildTimestamp, Calendar currentBuildTimestamp) throws IOException, InterruptedException, ParseException {
@@ -56,7 +59,7 @@ public class CheckoutAction {
 
         final String versionSpecString = RemoteChangesetVersionCommand.toString(currentBuildVersionSpec);
         final String normalizedFolder = determineCheckoutPath(workspacePath, localFolder);
-        project.getFiles(normalizedFolder, versionSpecString);
+        project.getFiles(normalizedFolder, versionSpecString, mappedPaths);
 
         if (lastBuildVersionSpec != null) {
             return project.getVCCHistory(lastBuildVersionSpec, currentBuildVersionSpec, true, Integer.MAX_VALUE);
@@ -68,7 +71,7 @@ public class CheckoutAction {
     public List<ChangeSet> checkoutBySingleVersionSpec(Server server, FilePath workspacePath, String singleVersionSpec) throws IOException, InterruptedException {
         Project project = getProject(server, workspacePath);
         final String normalizedFolder = determineCheckoutPath(workspacePath, localFolder);
-        project.getFiles(normalizedFolder, singleVersionSpec);
+        project.getFiles(normalizedFolder, singleVersionSpec, mappedPaths);
 
         return project.getDetailedHistory(singleVersionSpec);
     }
@@ -97,7 +100,15 @@ public class CheckoutAction {
             }
             final String serverPath = project.getProjectPath();
             final String localPath = localFolderPath.getRemote();
-            workspace = workspaces.newWorkspace(workspaceName, serverPath, cloakedPaths, localPath);
+            Collection<MappingItem> aNewItems = new ArrayList<MappingItem>();
+            
+            for(final MappingItem aItem: mappedPaths)
+            {
+            	MappingItem aNew = new MappingItem(aItem.getServerName(), localPath + "\\" + aItem.getClientPath());
+            	aNewItems.add(aNew);
+            }
+            
+            workspace = workspaces.newWorkspace(workspaceName, serverPath, cloakedPaths, localPath, aNewItems);
         } else {
             workspace = workspaces.getWorkspace(workspaceName, showWorkspaces);
         }

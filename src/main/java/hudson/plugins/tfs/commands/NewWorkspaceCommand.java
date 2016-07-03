@@ -8,6 +8,7 @@ import com.microsoft.tfs.core.clients.versioncontrol.soapextensions.RecursionTyp
 import com.microsoft.tfs.core.clients.versioncontrol.soapextensions.WorkingFolder;
 import com.microsoft.tfs.core.clients.versioncontrol.soapextensions.WorkingFolderType;
 import hudson.model.TaskListener;
+import hudson.plugins.tfs.model.MappingItem;
 import hudson.plugins.tfs.model.MockableVersionControlClient;
 import hudson.plugins.tfs.model.Server;
 import hudson.remoting.Callable;
@@ -31,13 +32,15 @@ public class NewWorkspaceCommand extends AbstractCallableCommand implements Call
     private final String serverPath;
     private final Collection<String> cloakedPaths;
     private final String localPath;
+    private final Collection<MappingItem> mappedPaths;
 
-    public NewWorkspaceCommand(final ServerConfigurationProvider server, final String workspaceName, final String serverPath, Collection<String> cloakedPaths, final String localPath) {
+    public NewWorkspaceCommand(final ServerConfigurationProvider server, final String workspaceName, final String serverPath, Collection<String> cloakedPaths, final String localPath, Collection<MappingItem> mappedPaths) {
         super(server);
         this.workspaceName = workspaceName;
         this.serverPath = serverPath;
         this.cloakedPaths = cloakedPaths;
         this.localPath = localPath;
+        this.mappedPaths = mappedPaths;
     }
 
     public Callable<Void, Exception> getCallable() {
@@ -54,6 +57,8 @@ public class NewWorkspaceCommand extends AbstractCallableCommand implements Call
         final String creatingMessage = String.format(CreatingTemplate, workspaceName, userName);
         logger.println(creatingMessage);
         
+        logger.println("Inside NewWorkspace with: " + mappedPaths.toString());
+        
         WorkingFolder[] foldersToMap = null;
         if (serverPath != null && localPath != null) {
             final String mappingMessage = String.format(MappingTemplate, serverPath, localPath, workspaceName);
@@ -63,6 +68,7 @@ public class NewWorkspaceCommand extends AbstractCallableCommand implements Call
 
             folderList.add(new WorkingFolder(serverPath, LocalPath.canonicalize(localPath), WorkingFolderType.MAP, RecursionType.FULL));
 
+            logger.println("Entry for old path:" + LocalPath.canonicalize(localPath));
 
             for (final String cloakedPath : cloakedPaths) {
                 final String cloakingMessage = String.format(CloakingTemplate, cloakedPath, workspaceName);
@@ -71,6 +77,21 @@ public class NewWorkspaceCommand extends AbstractCallableCommand implements Call
                 folderList.add(new WorkingFolder(cloakedPath, null, WorkingFolderType.CLOAK));
             }
             foldersToMap = folderList.toArray(EMPTY_WORKING_FOLDER_ARRAY);
+            
+            if (!mappedPaths.isEmpty())
+            {
+            	logger.println("mappedPaths is not null");
+            	folderList.clear();
+              //  folderList.add(new WorkingFolder(serverPath, LocalPath.canonicalize(localPath), WorkingFolderType.MAP, RecursionType.FULL));
+
+            	for (final MappingItem aItem: mappedPaths)
+            	{
+            		WorkingFolder aFolder = new WorkingFolder(aItem.getServerName(), LocalPath.canonicalize(aItem.getClientPath()), WorkingFolderType.MAP, RecursionType.FULL);
+            		folderList.add(aFolder);
+            		logger.println("Entry for new path: " + LocalPath.canonicalize(aItem.getClientPath()));
+            	}
+            	foldersToMap = folderList.toArray(EMPTY_WORKING_FOLDER_ARRAY);
+            }
         }
 
         vcc.createWorkspace(
