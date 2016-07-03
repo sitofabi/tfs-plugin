@@ -89,7 +89,7 @@ public class TeamFoundationServerScm extends SCM {
     private transient String workspaceChangesetVersion;
 	private final Collection<MappingItem> mappedPaths;
     
-    private static final Logger logger = Logger.getLogger(TeamFoundationServerScm.class.getName());
+	private static final Logger logger = Logger.getLogger(TeamFoundationServerScm.class.getName());
 
     @Deprecated
     public TeamFoundationServerScm(String serverUrl, String projectPath, String localPath, boolean useUpdate, String workspaceName, String userName, String password) {
@@ -213,6 +213,21 @@ public class TeamFoundationServerScm extends SCM {
         }
         return paths;
     }
+    
+    Collection<MappingItem> getMappedPaths(final Run<?, ?> run)
+    {
+    	final List<MappingItem> items = new ArrayList<MappingItem>();
+    	if (mappedPaths != null) {
+    		final BuildVariableResolver resolver = new BuildVariableResolver(run.getParent());
+    		for (final MappingItem mappedItem : mappedPaths) {
+                final String path = substituteBuildParameter(run, mappedItem.getServerName());
+                final String enhancedPath = Util.replaceMacro(path, resolver);
+                items.add(new MappingItem(enhancedPath, mappedItem.getClientPath()));
+             //   paths.add(enhancedPath);
+    		}
+    	}
+    	return items;
+    }
 
     private String substituteBuildParameter(Run<?,?> run, String text) {
         if (run instanceof AbstractBuild<?, ?>){
@@ -269,10 +284,12 @@ public class TeamFoundationServerScm extends SCM {
 
     @Override
     public boolean checkout(AbstractBuild<?, ?> build, Launcher launcher, FilePath workspaceFilePath, BuildListener listener, File changelogFile) throws IOException, InterruptedException {
-        Server server = createServer(launcher, listener, build);
+        listener.getLogger().println("Called Checkout");
+    	Server server = createServer(launcher, listener, build);
         try {
-            WorkspaceConfiguration workspaceConfiguration = new WorkspaceConfiguration(server.getUrl(), getWorkspaceName(build, Computer.currentComputer()), getProjectPath(build), getCloakedPaths(build), getLocalPath());
+            WorkspaceConfiguration workspaceConfiguration = new WorkspaceConfiguration(server.getUrl(), getWorkspaceName(build, Computer.currentComputer()), getProjectPath(build), getCloakedPaths(build), getLocalPath(), getMappedPaths(build));
             
+            listener.getLogger().println("Result of mapped: " + getMappedPaths(build));
             final AbstractBuild<?, ?> previousBuild = build.getPreviousBuild();
             // Check if the configuration has changed
             if (previousBuild != null) {
@@ -294,7 +311,7 @@ public class TeamFoundationServerScm extends SCM {
             final Project project = server.getProject(projectPath);
             final int changeSet = recordWorkspaceChangesetVersion(build, listener, project, projectPath, singleVersionSpec);
 
-            CheckoutAction action = new CheckoutAction(workspaceConfiguration.getWorkspaceName(), workspaceConfiguration.getProjectPath(), workspaceConfiguration.getCloakedPaths(), workspaceConfiguration.getWorkfolder(), isUseUpdate());
+            CheckoutAction action = new CheckoutAction(workspaceConfiguration.getWorkspaceName(), workspaceConfiguration.getProjectPath(), workspaceConfiguration.getCloakedPaths(), workspaceConfiguration.getWorkfolder(), isUseUpdate(), workspaceConfiguration.getMappedPaths());
             List<ChangeSet> list;
             if (StringUtils.isNotEmpty(singleVersionSpec)) {
                 list = action.checkoutBySingleVersionSpec(server, workspaceFilePath, singleVersionSpec);

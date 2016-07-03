@@ -30,4 +30,10 @@ public class MappingItem
 	{
 		return clientPath;
 	}
+	
+   @Override
+public String toString() {
+	// TODO Auto-generated method stub
+	return "ServerPath: " + serverName + " ClientPath: " + clientPath;
+}
 }

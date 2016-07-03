@@ -86,10 +86,11 @@ public class Workspaces implements ListWorkspacesCommand.WorkspaceFactory {
      * @param serverPath the path in TFVC to map
      * @param cloakedPaths the paths in TFVC to exclude from mapping
      * @param localPath the path in the local filesystem to map
+     * @param mappedPaths 
      * @return a workspace
      */
-    public Workspace newWorkspace(final String workspaceName, final String serverPath, Collection<String> cloakedPaths, final String localPath) {
-        NewWorkspaceCommand command = new NewWorkspaceCommand(server, workspaceName, serverPath, cloakedPaths, localPath);
+    public Workspace newWorkspace(final String workspaceName, final String serverPath, Collection<String> cloakedPaths, final String localPath, Collection<MappingItem> mappedPaths) {
+        NewWorkspaceCommand command = new NewWorkspaceCommand(server, workspaceName, serverPath, cloakedPaths, localPath, mappedPaths);
         server.execute(command.getCallable());
         Workspace workspace = new Workspace(workspaceName);
         workspaces.put(workspaceName, workspace);

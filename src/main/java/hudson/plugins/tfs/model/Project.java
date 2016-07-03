@@ -251,8 +251,8 @@ public class Project {
      * @param localPath the local path to get all files into
      * @param versionSpec the version spec to use when getting the files
      */
-    public void getFiles(String localPath, String versionSpec) {
-        GetFilesToWorkFolderCommand command = new GetFilesToWorkFolderCommand(server, localPath, versionSpec);
+    public void getFiles(String localPath, String versionSpec, Collection<MappingItem> mappedPaths) {
+        GetFilesToWorkFolderCommand command = new GetFilesToWorkFolderCommand(server, localPath, versionSpec, mappedPaths);
         server.execute(command.getCallable());
     }
 
