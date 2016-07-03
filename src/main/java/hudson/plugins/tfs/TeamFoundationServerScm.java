@@ -390,7 +390,8 @@ public class TeamFoundationServerScm extends SCM {
                 return (server.getProject(getProjectPath(lastRun)).getDetailedHistoryWithoutCloakedPaths(
                             lastRun.getTimestamp(),
                             Calendar.getInstance(),
-                            getCloakedPaths(lastRun)
+                            getCloakedPaths(lastRun),
+                            getMappedPaths(lastRun)
                         ).size() > 0);
             } finally {
                 server.close();
@@ -615,7 +616,7 @@ public class TeamFoundationServerScm extends SCM {
         final Server server = createServer(localLauncher, listener, build);
         final Project tfsProject = server.getProject(projectPath);
         try {
-            final ChangeSet latest = tfsProject.getLatestUncloakedChangeset(tfsBaseline.changesetVersion, cloakedPaths);
+            final ChangeSet latest = tfsProject.getLatestUncloakedChangeset(tfsBaseline.changesetVersion, cloakedPaths, mappedPaths);
             final TFSRevisionState tfsRemote =
                     (latest != null)
                     ? new TFSRevisionState(latest.getVersion(), projectPath)
