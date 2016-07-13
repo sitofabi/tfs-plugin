@@ -1,5 +1,7 @@
 package hudson.plugins.tfs.model;
 
+import java.io.Serializable;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -8,7 +10,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author Erik Ramfelt
  */
 
-public class MappingItem 
+public class MappingItem  implements Serializable
 {
 	private final String serverName;
 	private final String clientPath;
