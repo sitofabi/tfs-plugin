@@ -80,9 +80,8 @@ public class NewWorkspaceCommand extends AbstractCallableCommand implements Call
             
             if (!mappedPaths.isEmpty())
             {
-            	logger.println("mappedPaths is not null");
+            	logger.println("MappedPaths is not null so we are overwriting the mapping. Cloaked-Paths will be reset");
             	folderList.clear();
-              //  folderList.add(new WorkingFolder(serverPath, LocalPath.canonicalize(localPath), WorkingFolderType.MAP, RecursionType.FULL));
 
             	for (final MappingItem aItem: mappedPaths)
             	{
